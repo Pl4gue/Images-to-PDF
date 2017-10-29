@@ -1,4 +1,4 @@
-package swati4star.createpdf;
+package swati4star.createpdf.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -12,8 +12,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
+import swati4star.createpdf.R;
+import swati4star.createpdf.fragment.HomeFragment;
+import swati4star.createpdf.fragment.ViewFilesFragment;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -36,8 +37,8 @@ public class MainActivity extends AppCompatActivity
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
-        // Set Home fragment
-        Fragment fragment = new Home();
+        // Set HomeFragment fragment
+        Fragment fragment = new HomeFragment();
         FragmentManager fragmentManager = getSupportFragmentManager();
         fragmentManager.beginTransaction().replace(R.id.content, fragment).commit();
 
@@ -64,11 +65,11 @@ public class MainActivity extends AppCompatActivity
 
         switch (id) {
             case R.id.nav_camera:
-                fragment = new Home();
+                fragment = new HomeFragment();
                 fragmentManager.beginTransaction().replace(R.id.content, fragment).commit();
                 break;
             case R.id.nav_gallery:
-                fragment = new ViewFiles();
+                fragment = new ViewFilesFragment();
                 fragmentManager.beginTransaction().replace(R.id.content, fragment).commit();
                 break;
         }

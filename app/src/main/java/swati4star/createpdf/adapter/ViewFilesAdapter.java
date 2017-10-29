@@ -1,4 +1,4 @@
-package swati4star.createpdf;
+package swati4star.createpdf.adapter;
 
 import android.content.ActivityNotFoundException;
 import android.content.Context;
@@ -14,11 +14,11 @@ import android.print.PrintDocumentInfo;
 import android.print.PrintManager;
 import android.support.annotation.StringRes;
 import android.support.v4.content.FileProvider;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,7 +34,10 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import butterknife.BindView;
 import butterknife.ButterKnife;
+import swati4star.createpdf.R;
+import swati4star.createpdf.fragment.ViewFilesFragment;
 
 
 /**
@@ -44,11 +47,11 @@ import butterknife.ButterKnife;
  */
 
 
-public class FilesAdapter extends BaseAdapter {
+public class ViewFilesAdapter extends RecyclerView.Adapter<ViewFilesAdapter.ViewFilesHolder> {
 
     private static LayoutInflater inflater;
     private Context mContext;
-    private ArrayList<File> mFeedItems;
+    private ArrayList<File> mFileList;
     private String mFileName;
     private PrintDocumentAdapter mPrintDocumentAdapter = new PrintDocumentAdapter() {
 
@@ -113,69 +116,30 @@ public class FilesAdapter extends BaseAdapter {
      * @param context   the context calling this adapter
      * @param feedItems array list containing path of files
      */
-    public FilesAdapter(Context context, ArrayList<File> feedItems) {
+    public ViewFilesAdapter(Context context, ArrayList<File> feedItems) {
         this.mContext = context;
-        this.mFeedItems = feedItems;
+        this.mFileList = feedItems;
 
         inflater = (LayoutInflater) context
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
-    /**
-     * Sets pdf files
-     *
-     * @param pdfFiles array list containing path of files
-     */
-    public void setData(ArrayList<File> pdfFiles) {
-        mFeedItems = pdfFiles;
-        notifyDataSetChanged();
-    }
-
-    /**
-     * Return number of elements in adapter
-     *
-     * @return count of number of elements
-     */
     @Override
-    public int getCount() {
-        return mFeedItems.size();
-    }
-
-    /**
-     * get Particular item at a given position
-     *
-     * @param position the position of item
-     * @return object referencing the item at given position
-     */
-    @Override
-    public Object getItem(int position) {
-        return mFeedItems.get(position).getPath();
-    }
-
-
-    @Override
-    public long getItemId(int position) {
-        return position;
+    public ViewFilesHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View itemView = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_file, parent, false);
+        return new ViewFilesHolder(itemView);
     }
 
     @Override
-    public View getView(final int position, View view, ViewGroup parent) {
-        ViewHolder holder;
-        if (view != null) {
-            holder = (ViewHolder) view.getTag();
-        } else {
-            view = inflater.inflate(R.layout.file_list_item, parent, false);
-            holder = new ViewHolder(view);
-            holder.textView = (TextView) view.findViewById(R.id.name);
-            holder.mRipple = (MaterialRippleLayout) view.findViewById(R.id.ripple);
-
-            view.setTag(holder);
-        }
-
+    public void onBindViewHolder(ViewFilesHolder holder, int position) {
+        Log.d("logs", "getItemCount: " + mFileList.size());
         // Extract file name from path
-        final String fileName = mFeedItems.get(position).getPath();
+        final String fileName = mFileList.get(position).getPath();
+        final int filePosition = position;
         String[] name = fileName.split("/");
-        holder.textView.setText(name[name.length - 1]);
+
+        holder.mFilename.setText(name[name.length - 1]);
 
         holder.mRipple.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -194,7 +158,7 @@ public class FilesAdapter extends BaseAdapter {
                                         break;
 
                                     case 1: //delete
-                                        deleteFile(fileName, position);
+                                        deleteFile(fileName, filePosition);
                                         break;
 
                                     case 2: //delete all files
@@ -202,7 +166,7 @@ public class FilesAdapter extends BaseAdapter {
                                         break;
 
                                     case 3: //rename
-                                        renameFile(position);
+                                        renameFile(filePosition);
                                         break;
 
                                     case 4: //Print
@@ -219,8 +183,26 @@ public class FilesAdapter extends BaseAdapter {
                 notifyDataSetChanged();
             }
         });
+    }
 
-        return view;
+    @Override
+    public int getItemCount() {
+        return mFileList == null ? 0 : mFileList.size();
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
+    }
+
+    /**
+     * Sets pdf files
+     *
+     * @param pdfFiles array list containing path of files
+     */
+    public void setData(ArrayList<File> pdfFiles) {
+        mFileList = pdfFiles;
+        notifyDataSetChanged();
     }
 
     public void openFile(String name) {
@@ -242,10 +224,10 @@ public class FilesAdapter extends BaseAdapter {
         if (fdelete.exists()) {
             if (fdelete.delete()) {
                 Toast.makeText(mContext, R.string.toast_file_deleted, Toast.LENGTH_LONG).show();
-                mFeedItems.remove(position);
+                mFileList.remove(position);
                 notifyDataSetChanged();
-                if (mFeedItems.size() == 0) {
-                    ViewFiles.emptyStatusTextView.setVisibility(View.VISIBLE);
+                if (mFileList.size() == 0) {
+                    ViewFilesFragment.emptyStatusTextView.setVisibility(View.VISIBLE);
                 }
             } else {
                 Toast.makeText(mContext, R.string.toast_file_not_deleted, Toast.LENGTH_LONG).show();
@@ -257,7 +239,7 @@ public class FilesAdapter extends BaseAdapter {
     private void deleteAllFiles() {
         int deletedCount = 0;
         List<File> toRemove = new ArrayList<>();
-        for (File fDelete : mFeedItems) {
+        for (File fDelete : mFileList) {
             if (fDelete.exists()) {
                 if (fDelete.delete()) {
                     toRemove.add(fDelete);
@@ -266,11 +248,11 @@ public class FilesAdapter extends BaseAdapter {
             }
         }
         for (File fToRemove : toRemove) {
-            mFeedItems.remove(fToRemove);
+            mFileList.remove(fToRemove);
         }
         notifyDataSetChanged();
-        if (mFeedItems.size() == 0) {
-            ViewFiles.emptyStatusTextView.setVisibility(View.VISIBLE);
+        if (mFileList.size() == 0) {
+            ViewFilesFragment.emptyStatusTextView.setVisibility(View.VISIBLE);
         }
         Toast.makeText(mContext
                 , String.format(string(R.string.toast_multipleFiles_deleted), deletedCount)
@@ -286,11 +268,10 @@ public class FilesAdapter extends BaseAdapter {
                     public void onInput(MaterialDialog dialog, CharSequence input) {
                         if (input == null) {
                             Toast.makeText(mContext, R.string.toast_name_not_blank, Toast.LENGTH_LONG).show();
-
                         } else {
                             String newname = input.toString();
-                            File oldfile = mFeedItems.get(position);
-                            String[] x = mFeedItems.get(position).getPath().split("/");
+                            File oldfile = mFileList.get(position);
+                            String[] x = mFileList.get(position).getPath().split("/");
                             String newfilename = "";
                             for (int i = 0; i < x.length - 1; i++)
                                 newfilename = newfilename + "/" + x[i];
@@ -302,7 +283,7 @@ public class FilesAdapter extends BaseAdapter {
 
                             if (oldfile.renameTo(newfile)) {
                                 Toast.makeText(mContext, R.string.toast_file_renamed, Toast.LENGTH_LONG).show();
-                                mFeedItems.set(position, newfile);
+                                mFileList.set(position, newfile);
                                 notifyDataSetChanged();
                             } else {
                                 Toast.makeText(mContext, R.string.toast_file_not_renamed, Toast.LENGTH_LONG).show();
@@ -347,13 +328,17 @@ public class FilesAdapter extends BaseAdapter {
         return mContext.getString(resId);
     }
 
-    static class ViewHolder {
+    public class ViewFilesHolder extends RecyclerView.ViewHolder {
 
-        TextView textView;
+        @BindView(R.id.fileRipple)
         MaterialRippleLayout mRipple;
+        @BindView(R.id.fileName)
+        TextView mFilename;
 
-        public ViewHolder(View view) {
-            ButterKnife.bind(this, view);
+
+        public ViewFilesHolder(View itemView) {
+            super(itemView);
+            ButterKnife.bind(this, itemView);
         }
     }
 
