@@ -236,6 +236,7 @@ public class ViewFilesAdapter extends RecyclerView.Adapter<ViewFilesAdapter.View
 
     }
 
+    // iterate through filelist and remove all elements
     private void deleteAllFiles() {
         int deletedCount = 0;
         List<File> toRemove = new ArrayList<>();
